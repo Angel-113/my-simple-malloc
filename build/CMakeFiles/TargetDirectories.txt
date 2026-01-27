@@ -1,0 +1,5 @@
+/home/angel/Projects/allocator/build/CMakeFiles/malloc_core.dir
+/home/angel/Projects/allocator/build/CMakeFiles/run_tests.dir
+/home/angel/Projects/allocator/build/CMakeFiles/test.dir
+/home/angel/Projects/allocator/build/CMakeFiles/edit_cache.dir
+/home/angel/Projects/allocator/build/CMakeFiles/rebuild_cache.dir

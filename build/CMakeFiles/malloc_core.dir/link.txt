@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmalloc_core.a CMakeFiles/malloc_core.dir/src/base.c.o CMakeFiles/malloc_core.dir/src/allocator.c.o CMakeFiles/malloc_core.dir/src/header.c.o CMakeFiles/malloc_core.dir/src/rb_tree.c.o
+/usr/bin/ranlib libmalloc_core.a
