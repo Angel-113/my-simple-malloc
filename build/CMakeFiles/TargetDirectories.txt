@@ -1,0 +1,5 @@
+/home/angel/Projects/my-simple-malloc/build/CMakeFiles/malloc_core.dir
+/home/angel/Projects/my-simple-malloc/build/CMakeFiles/run_tests.dir
+/home/angel/Projects/my-simple-malloc/build/CMakeFiles/test.dir
+/home/angel/Projects/my-simple-malloc/build/CMakeFiles/edit_cache.dir
+/home/angel/Projects/my-simple-malloc/build/CMakeFiles/rebuild_cache.dir

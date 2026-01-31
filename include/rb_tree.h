@@ -22,20 +22,20 @@
  */
 
 typedef struct Node {
-  Header header;  
+  header_t header;  
   struct Node* parent;
   struct Node* right;
   struct Node* left;
-} Node; 
+} node_t; 
 
-extern Node* __sentinel;
+extern node_t* __sentinel;
 
-extern Node* insert ( Node** root, Node* new_node );
-extern Node* delete ( Node** root,  Node* node );
-extern Node* init_node ( void* ptr, u64 size, bool color, bool status );
-extern Node* search ( Node* root, u64 target ); 
-extern Node* get_node ( void* ptr ); 
-extern void set_footer ( Node* node ); 
-extern Node*  merge_nodes( Node* a, Node* b ); 
+extern node_t* insert ( node_t** root, node_t* new_node );
+extern node_t* delete ( node_t** root,  node_t* node );
+extern node_t* init_node ( void* ptr, u64 size, bool color, bool status );
+extern node_t* search ( node_t* root, u64 target ); 
+extern node_t* get_node ( void* ptr ); 
+extern void set_footer ( node_t* node ); 
+extern node_t*  merge_nodes( node_t* a, node_t* b ); 
 
 #endif

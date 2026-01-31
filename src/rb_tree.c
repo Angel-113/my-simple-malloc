@@ -3,11 +3,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-static Node __sentinel_value = {
+static node_t __sentinel_value = {
   0, &__sentinel_value, &__sentinel_value, &__sentinel_value
 };
 
-Node* __sentinel = &__sentinel_value; 
+node_t* __sentinel = &__sentinel_value; 
 
 typedef enum ChildKind {
     LEFT,
@@ -17,25 +17,25 @@ typedef enum ChildKind {
 
 /* Some helpers */
 
-static Header* get_footer ( Node* node );
-static Node* get_next_node ( Node* node );
-static Node* get_substitute ( Node* node );  
-static void disconnect_node ( Node* node ); 
-static void left_rotate ( Node** root, Node* node );
-static void right_rotate ( Node** root, Node* node );
-static void left_right_rotate ( Node** root, Node* node );
-static void right_left_rotate ( Node** root, Node* node ); 
-static bool fix_deletion ( Node** root, Node* result, bool black_token );
-static bool fix_subtree ( Node** root, Node* current_subtree ); 
-static void swap_nodes ( Node* inorder, Node* node ); /* Just changes the tree hierarchy */
-static ChildKind get_child_kind ( Node* node ); 
+static header_t* get_footer ( node_t* node );
+static node_t* get_next_node ( node_t* node );
+static node_t* get_substitute ( node_t* node );  
+static void disconnect_node ( node_t* node ); 
+static void left_rotate ( node_t** root, node_t* node );
+static void right_rotate ( node_t** root, node_t* node );
+static void left_right_rotate ( node_t** root, node_t* node );
+static void right_left_rotate ( node_t** root, node_t* node ); 
+static bool fix_deletion ( node_t** root, node_t* result, bool black_token );
+static bool fix_subtree ( node_t** root, node_t* current_subtree ); 
+static void swap_nodes ( node_t* inorder, node_t* node ); /* Just changes the tree hierarchy */
+static ChildKind get_child_kind ( node_t* node ); 
 
 /* Implementations */
 
-Node* insert ( Node** root, Node* new_node ) { /* top-down insertion */
+node_t* insert ( node_t** root, node_t* new_node ) { /* top-down insertion */
     u64 target = get_size(new_node->header);
-    Node* current = *root;
-    Node* parent = __sentinel; 
+    node_t* current = *root;
+    node_t* parent = __sentinel; 
 
     while ( current != __sentinel ) {
         parent = current; 
@@ -45,7 +45,7 @@ Node* insert ( Node** root, Node* new_node ) { /* top-down insertion */
     }
 
     /* insert node */
-    Node** child = target < get_size(parent->header) ? &parent->left : &parent->right;
+    node_t** child = target < get_size(parent->header) ? &parent->left : &parent->right;
     *child = new_node;
     (*child)->parent = parent;
 
@@ -55,7 +55,7 @@ Node* insert ( Node** root, Node* new_node ) { /* top-down insertion */
     return new_node;     
 }
 
-Node* delete ( Node** root, Node* node ) { /* bottom-up deletion */
+node_t* delete ( node_t** root, node_t* node ) { /* bottom-up deletion */
     if ( !root || *root == __sentinel ) {
         print_error("Corrupted tree: root == NULL\n");
         return NULL; 
@@ -66,9 +66,9 @@ Node* delete ( Node** root, Node* node ) { /* bottom-up deletion */
         return NULL; 
     }
 
-    Node* result = get_substitute(node);
-    Node* parent = node->parent;
-    Node** new_child = node == *root ? &(*root) : ( parent->left == node ? &parent->left : &parent->right ); 
+    node_t* result = get_substitute(node);
+    node_t* parent = node->parent;
+    node_t** new_child = node == *root ? &(*root) : ( parent->left == node ? &parent->left : &parent->right ); 
     bool black_token = !get_color(node->header); 
  
     if ( result == __sentinel ) { /* no child */
@@ -92,8 +92,8 @@ Node* delete ( Node** root, Node* node ) { /* bottom-up deletion */
     return node; 
 }
 
-Node* init_node ( void* ptr, u64 size, bool color, bool status ) { /* init node assumes that ptr will be node's address */
-    Node* node = ptr;
+node_t* init_node ( void* ptr, u64 size, bool color, bool status ) { /* init node assumes that ptr will be node's address */
+    node_t* node = ptr;
     set_color(&node->header, color);
     set_status(&node->header,  status);
     set_size(&node->header, size);
@@ -101,8 +101,8 @@ Node* init_node ( void* ptr, u64 size, bool color, bool status ) { /* init node 
     return node; 
 }
 
-Node* search ( Node* root, u64 target ) { /* best fit algorithm */
-    Node* current = root;
+node_t* search ( node_t* root, u64 target ) { /* best fit algorithm */
+    node_t* current = root;
     while ( current->left != __sentinel && current->right != __sentinel ) {
         if ( get_size(current->header) == target ) break; 
         current = target < get_size(current->header) ? current->left : current->right;  
@@ -110,18 +110,18 @@ Node* search ( Node* root, u64 target ) { /* best fit algorithm */
     return current; 
 }
 
-Node* get_node ( void* ptr ) { /* get_node assumes ptr = (u8 *)original_node + sizeof(Header); */
-    return (Node *)((u8 *)ptr - sizeof(Header)); 
+node_t* get_node ( void* ptr ) { /* get_node assumes ptr = (u8 *)original_node + sizeof(Header); */
+    return (node_t *)((u8 *)ptr - sizeof(header_t)); 
 }
 
-void set_footer (Node* node) { /* A node's footer must be equal to its header */
-    Header* footer = get_footer(node);
+void set_footer (node_t* node) { /* A node's footer must be equal to its header */
+    header_t* footer = get_footer(node);
     *footer = node->header; 
 }
 
-Node* merge_nodes ( Node* a, Node* b ) { /* merge_nodes assumes a and b are free memory contiguous nodes */
-    Node* left = a < b ? a : b;
-    Node* right = left == a ? b : a; 
+node_t* merge_nodes ( node_t* a, node_t* b ) { /* merge_nodes assumes a and b are free memory contiguous nodes */
+    node_t* left = a < b ? a : b;
+    node_t* right = left == a ? b : a; 
 
     if ( right != get_next_node(left) ) {
         print_error("Trying to merge non-memory-contiguous nodes\n");
@@ -133,7 +133,7 @@ Node* merge_nodes ( Node* a, Node* b ) { /* merge_nodes assumes a and b are free
         return __sentinel; 
     }
 
-    u64 new_size = get_size(a->header) + get_size(b->header) + 2 * sizeof(Header); 
+    u64 new_size = get_size(a->header) + get_size(b->header) + 2 * sizeof(header_t); 
     left = init_node(left, new_size, __red, __free); 
 
     return left; 
@@ -141,28 +141,28 @@ Node* merge_nodes ( Node* a, Node* b ) { /* merge_nodes assumes a and b are free
 
 /* Helper implementations */
 
-static Header* get_footer ( Node* node ) {
-    return (Header *)( (u8 *)node + sizeof(Header) + get_size(node->header) );
+static header_t* get_footer ( node_t* node ) {
+    return (header_t *)( (u8 *)node + sizeof(header_t) + get_size(node->header) );
 }
 
-static Node* get_next_node ( Node* node ) {
-    return (Node *)( (u8 *)get_footer(node) + sizeof(Header) ); 
+static node_t* get_next_node ( node_t* node ) {
+    return (node_t *)( (u8 *)get_footer(node) + sizeof(header_t) ); 
 }
 
-static void disconnect_node ( Node* node ) {
+static void disconnect_node ( node_t* node ) {
     node->parent = node->left = node->right = __sentinel; 
 }
 
-static ChildKind get_child_kind( Node* child ) {
+static ChildKind get_child_kind( node_t* child ) {
     return child->parent == __sentinel ? ROOT : ( child->parent->left == child ? LEFT : RIGHT ); 
 }
 
-static void left_rotate ( Node** root,  Node* node ) { /* perform rotation by pushing node down and indirect linking */
-    Node* current_parent = node;
-    Node* current_right = node->right;
-    Node* new_right = current_right->left; 
+static void left_rotate ( node_t** root,  node_t* node ) { /* perform rotation by pushing node down and indirect linking */
+    node_t* current_parent = node;
+    node_t* current_right = node->right;
+    node_t* new_right = current_right->left; 
 
-    Node** new_node = node != *root ? ( (node->parent)->left == node ? &(node->parent)->left : &(node->parent)->right ) : root;
+    node_t** new_node = node != *root ? ( (node->parent)->left == node ? &(node->parent)->left : &(node->parent)->right ) : root;
     *new_node = current_right;
     (*new_node)->left = current_parent;
     (*new_node)->parent = current_parent->parent;
@@ -172,12 +172,12 @@ static void left_rotate ( Node** root,  Node* node ) { /* perform rotation by pu
     new_right->parent = current_parent; 
 }
 
-static void right_rotate ( Node** root, Node* node ) {
-    Node* current_parent = node;
-    Node* current_left = node->left;
-    Node* new_left = current_left->right;
+static void right_rotate ( node_t** root, node_t* node ) {
+    node_t* current_parent = node;
+    node_t* current_left = node->left;
+    node_t* new_left = current_left->right;
 
-    Node** new_node = node != *root ? ( (node->parent)->left == node ? &(node->parent)->left : &(node->parent)->right ) : root;
+    node_t** new_node = node != *root ? ( (node->parent)->left == node ? &(node->parent)->left : &(node->parent)->right ) : root;
     *new_node = current_left;
     (*new_node)->right = current_left;
     (*new_node)->parent = current_parent->parent;
@@ -187,28 +187,28 @@ static void right_rotate ( Node** root, Node* node ) {
     new_left->parent = current_parent;
 }
 
-static void left_right_rotate ( Node** root, Node* node ) {
+static void left_right_rotate ( node_t** root, node_t* node ) {
     left_rotate(root, node->right);
     right_rotate(root, node);
 }
 
-static void right_left_rotate ( Node** root, Node* node ) {
+static void right_left_rotate ( node_t** root, node_t* node ) {
     right_rotate(root, node->left);
     left_rotate(root, node);
 }
 
-static void swap_nodes ( Node* inorder, Node* node ) { /* inorder->left is __sentinel */
-    Node* node_parent = node->parent;
-    Node* node_left = node->left;
-    Node* node_right = node->right;
-    Node* inor_parent = inorder->parent;
-    Node* inor_right = inorder->right;
+static void swap_nodes ( node_t* inorder, node_t* node ) { /* inorder->left is __sentinel */
+    node_t* node_parent = node->parent;
+    node_t* node_left = node->left;
+    node_t* node_right = node->right;
+    node_t* inor_parent = inorder->parent;
+    node_t* inor_right = inorder->right;
 
     bool color_node = get_color(node->header);
     bool color_inor = get_color(inorder->header); 
 
-    Node** new_node = node_parent != __sentinel ? (node_parent->left == node ? &node_parent->left : &node_parent->right) : &node;
-    Node** new_inorder = inor_parent != node ? (inor_parent->left == inorder ? &inor_parent->left : &inor_parent->right) : &inorder;
+    node_t** new_node = node_parent != __sentinel ? (node_parent->left == node ? &node_parent->left : &node_parent->right) : &node;
+    node_t** new_inorder = inor_parent != node ? (inor_parent->left == inorder ? &inor_parent->left : &inor_parent->right) : &inorder;
 
     /* perform swap by indirect linking */
     (*new_node) = inorder;
@@ -227,8 +227,8 @@ static void swap_nodes ( Node* inorder, Node* node ) { /* inorder->left is __sen
     set_color(&(*new_node)->header, color_node); 
 }
 
-static Node* get_substitute ( Node* node ) {
-    Node* result = __sentinel; 
+static node_t* get_substitute ( node_t* node ) {
+    node_t* result = __sentinel; 
     if ( node->left != __sentinel && node->right != __sentinel ) {
         result = node->right;
         while ( result->left != __sentinel ) result = result->left;
@@ -237,12 +237,12 @@ static Node* get_substitute ( Node* node ) {
     return result; 
 }
 
-static bool fix_deletion ( Node** root, Node* result, bool black_token ) { /* bottom-up deletion */
-    Node* current = result;
+static bool fix_deletion ( node_t** root, node_t* result, bool black_token ) { /* bottom-up deletion */
+    node_t* current = result;
     
     while ( current != *root && black_token ) { /* push the black_token up the tree */
-        Node* sibling = current->parent->left == current ? current->parent->right : current->parent->left;        
-        Node* grandparent = current->parent->parent;
+        node_t* sibling = current->parent->left == current ? current->parent->right : current->parent->left;        
+        node_t* grandparent = current->parent->parent;
 
         if ( current == __sentinel ) break;  /* reach the root */
         
@@ -261,8 +261,8 @@ static bool fix_deletion ( Node** root, Node* result, bool black_token ) { /* bo
             current_kind == LEFT ? left_rotate(root, current->parent) : right_rotate(root, current->parent); 
         }
         else if ( get_color(sibling->left->header) || get_color(sibling->right->header) ) { /* double black violatons and black sibling */
-            Node** near = current_kind == LEFT ? &sibling->left : &sibling->right;
-            Node** far = current_kind == LEFT ? &sibling->right : &sibling->left;  
+            node_t** near = current_kind == LEFT ? &sibling->left : &sibling->right;
+            node_t** far = current_kind == LEFT ? &sibling->right : &sibling->left;  
             if ( !get_color((*far)->header) ) current_kind == LEFT ? left_rotate(root, sibling) : right_rotate(root, sibling); 
             current_kind == LEFT ? right_rotate(root, current->parent) : left_rotate(root, current->parent); 
 
@@ -279,13 +279,13 @@ static bool fix_deletion ( Node** root, Node* result, bool black_token ) { /* bo
     return true;
 }
 
-static bool fix_subtree ( Node** root, Node* current_subtree ) { /* fix insertion before inserting */
+static bool fix_subtree ( node_t** root, node_t* current_subtree ) { /* fix insertion before inserting */
     set_color(&current_subtree->header, __red);
     set_color(&current_subtree->left->header, __black);
     set_color(&current_subtree->right->header, __black);
 
-    Node* parent = current_subtree->parent;
-    Node* grandpa = parent->parent; 
+    node_t* parent = current_subtree->parent;
+    node_t* grandpa = parent->parent; 
 
     if ( get_status(current_subtree->parent->header) ) { /* perform fixes */
         ChildKind current_kind = get_child_kind(current_subtree);

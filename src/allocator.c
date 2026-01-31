@@ -8,59 +8,59 @@
 #define MAX_THREADS 10
 
 static u32 id_current_root = 0; 
-static Node* current_roots[ MAX_THREADS ] = { 0 }; 
+static node_t* current_roots[ MAX_THREADS ] = { 0 }; 
 
-static Node** get_current_root ( void );
+static node_t** get_current_root ( void );
 static u16 get_current_root_id ( void ); 
 static bool memcopy ( void* src, void* dest, u64 size );
 
-static Node* add_mem_page( u64 size ) { /* syscall for mempages */
+static node_t* add_mem_page( u64 size ) { /* syscall for mempages */
     return  mmap(NULL, PAGES(size), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 }
 
-void* my_malloc ( u64 size ) { 
+void* allocate ( u64 size ) { 
     void* ptr = NULL;
-    Node** root = get_current_root(); 
+    node_t** root = get_current_root(); 
 
     if ( !root ) {
         *root = add_mem_page( size );
-        Node* used_node = init_node( *root, size, __red, __in_use );
-        *root = (Node *)((u8 *)used_node + size + 2 * sizeof(Header));
-        *root = init_node(*root, PAGES(size) - (size + 4 * sizeof(Header)), __black, __free );  
-        ptr = (u8 *)used_node + sizeof(Header);
+        node_t* used_node = init_node( *root, size, __red, __in_use );
+        *root = (node_t *)((u8 *)used_node + size + 2 * sizeof(header_t));
+        *root = init_node(*root, PAGES(size) - (size + 4 * sizeof(header_t)), __black, __free );  
+        ptr = (u8 *)used_node + sizeof(header_t);
         current_roots[0] = *root; 
     }
     else if ( (*root)->left == (*root)->right ) { /* still splitting memory */
-        ptr = (u8 *)root + sizeof(Header);
+        ptr = (u8 *)root + sizeof(header_t);
         u64 new_size = get_size( (*root)->header ) - size;
         bool status = get_status( (*root)->header );
         bool color = get_color( (*root)->header );
 
         if ( new_size <= size ) { /* last split in the memory segment */
-            Node* new_node = init_node(root, new_size - sizeof(Header), __red, __free);  
+            node_t* new_node = init_node(root, new_size - sizeof(header_t), __red, __free);  
             *root = add_mem_page(new_size);
             *root = init_node(root, PAGES(size), __black, __free); 
             insert( root, new_node ); 
         }
         
         else  { /* main split */
-            *root = (Node *)( (u8*) root + 2 * sizeof(Header) + size );
+            *root = (node_t *)( (u8*) root + 2 * sizeof(header_t) + size );
             *root = init_node( *root, size, color, status ); 
         }
 
         current_roots[get_current_root_id()] = *root; /* update the root */
     }
     else { /* now we search in a free list */
-        Node* result = search (*root, size);
+        node_t* result = search (*root, size);
         delete(root, result);
-        ptr = (u8 *)result + sizeof(Header); 
+        ptr = (u8 *)result + sizeof(header_t); 
     }
 
     return ptr; /* let the user handle the NULL case */  
 }
 
-void* my_realloc ( void* ptr, u64 size ) {
-    void* new_ptr = my_malloc ( size ); 
+void* reallocate ( void* ptr, u64 size ) {
+    void* new_ptr = allocate ( size ); 
     if ( !new_ptr ) {
         print_error("Malloc function returned NULL ptr\n"); 
         return NULL;
@@ -68,8 +68,8 @@ void* my_realloc ( void* ptr, u64 size ) {
     return memcopy(ptr, new_ptr, size) ? new_ptr : NULL; /* let the user handle the NULL case */ 
 }
 
-void my_free ( void* ptr ) {
-    Node* node = (Node *) ((u8*) ptr - sizeof(Header));
+void deallocate ( void* ptr ) {
+    node_t* node = (node_t *) ((u8*) ptr - sizeof(header_t));
 
     if ( get_status(node->header) ) {
         print_error("Double free operation\n"); 
@@ -78,12 +78,12 @@ void my_free ( void* ptr ) {
 
     set_status(&node->header, __free);
 
-    Header prev_footer = (Header)( (u8*)node - sizeof(Header) );
-    Node* prev_node = (Node *)( (u8*)node - (2 * sizeof(Header) + get_size(prev_footer)) ); 
-    Node* next_node = (Node *)( (u8*)node + 2 * sizeof(Header) + get_size(node->header) );
+    header_t prev_footer = (header_t)( (u8*)node - sizeof(header_t) );
+    node_t* prev_node = (node_t *)( (u8*)node - (2 * sizeof(header_t) + get_size(prev_footer)) ); 
+    node_t* next_node = (node_t *)( (u8*)node + 2 * sizeof(header_t) + get_size(node->header) );
 
     /* merge nodes */    
-    Node* merged_node = __sentinel;
+    node_t* merged_node = __sentinel;
         if ( get_status(prev_node->header) ) {
         delete(get_current_root(), prev_node);
         merged_node = merge_nodes(prev_node, node); 
@@ -112,7 +112,7 @@ static bool memcopy( void* src, void* dest, u64 size ) {
     return true;
 }
 
-Node** get_current_root ( void ) { /* will help to mange threads */
+node_t** get_current_root ( void ) { /* will help to mange threads */
     return current_roots[0]->header == 0 ? NULL : &current_roots[0]; 
 }
 

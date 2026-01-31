@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.22.1)
 # Correct variable for C23 standard
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(MyMalloc C)
 

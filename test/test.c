@@ -9,8 +9,8 @@
 
 #define MAX_NODES 1000
 
-static Node* root = NULL;
-static Node* nodes[MAX_NODES] = { 0 }; 
+static node_t* root = NULL;
+static node_t* nodes[MAX_NODES] = { 0 }; 
 static pcg32_random_t my_rng = { 0 };
 
 /* helpers */
@@ -21,10 +21,10 @@ static void init_tester ( void );
 static void insert_nodes ( void );
 static void delete_nodes ( u32 n_nodes );
 
-static bool blacks_property ( Node* root);
-static u64 count_blacks ( Node* root );
-static bool red_root ( Node* root );
-static bool red_red ( Node* node );
+static bool blacks_property ( node_t* root);
+static u64 count_blacks ( node_t* root );
+static bool red_root ( node_t* root );
+static bool red_red ( node_t* node );
 
 int main ( void ) { /* main test */
     if ( !tree_test() ) print_error("SOMETHING WENT WRONG WITH THE TREE\n"); 
@@ -48,9 +48,9 @@ bool test_insertion ( void ) {
         test = blacks_property(root) && red_root(root) && red_red(root); 
     }
     else {
-        static Node* current_nodes[MAX_NODES] = { 0 };
+        static node_t* current_nodes[MAX_NODES] = { 0 };
         for ( u64 i = 0; i < MAX_NODES; i++ ) {
-            current_nodes[i] = init_node(malloc(sizeof(Node)), get_rng64(), __red, __free);
+            current_nodes[i] = init_node(malloc(sizeof(node_t)), get_rng64(), __red, __free);
             insert(root, current_nodes[i]); 
         }
         test = blacks_property(root) && red_root(root) && red_root(root);
@@ -75,7 +75,7 @@ static u32 get_rng32 ( void ) {
 
 static void init_tester ( void ) { 
     if ( root ) return;
-    root = malloc(sizeof(Node *));
+    root = malloc(sizeof(node_t *));
     init_rng();
     set_size(&root->header, get_rng64());
     set_color(&root->header, __black);
@@ -84,7 +84,7 @@ static void init_tester ( void ) {
 
 static void insert_nodes ( void ) {
     for ( u16 i = 0; i < MAX_NODES; i++ ) {
-        if ( !nodes[i] ) nodes[i] = malloc( sizeof(Node ));
+        if ( !nodes[i] ) nodes[i] = malloc( sizeof(node_t ));
         nodes[i] = init_node(nodes[i], get_rng64(), __red, __free);
         insert(root, nodes[i]); 
     }
@@ -102,10 +102,10 @@ static void delete_nodes ( u32 n_nodes ) {
     }
 }
 
-static u64 count_blacks ( Node* root ) {
+static u64 count_blacks ( node_t* root ) {
     u64 blacks = 0;
 
-    Node* current = root;  
+    node_t* current = root;  
     while ( current->left != __sentinel ) current = current->left; 
 
     while ( current != root ) {
@@ -120,14 +120,14 @@ static u64 count_blacks ( Node* root ) {
     return blacks; 
 }
 
-static bool blacks_property ( Node* root ) {
+static bool blacks_property ( node_t* root ) {
     return count_blacks(root->left) == count_blacks(root->right); 
 }
 
-static bool red_root ( Node* root ) {
+static bool red_root ( node_t* root ) {
     return !get_color(root->header); 
 }
 
-static bool red_red ( Node* root ) { 
+static bool red_red ( node_t* root ) { 
     return ( get_color(root->header) && (get_color(root->left->header) || get_color(root->right->header)) ); 
 }
