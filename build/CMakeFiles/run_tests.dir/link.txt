@@ -1,1 +1,0 @@
-/usr/bin/cc CMakeFiles/run_tests.dir/test/test.c.o CMakeFiles/run_tests.dir/test/rand.c.o -o run_tests  libmalloc_core.a 
