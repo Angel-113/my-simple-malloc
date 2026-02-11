@@ -17,6 +17,7 @@ typedef enum ChildKind {
 
 /* Some helpers */
 
+static void set_footer ( node_t* node ); 
 static header_t* get_footer ( node_t* node );
 static node_t* get_next_node ( node_t* node );
 static node_t* get_substitute ( node_t* node );  

@@ -35,7 +35,6 @@ extern node_t* delete ( node_t** root,  node_t* node );
 extern node_t* init_node ( void* ptr, u64 size, bool color, bool status );
 extern node_t* search ( node_t* root, u64 target ); 
 extern node_t* get_node ( void* ptr ); 
-extern void set_footer ( node_t* node ); 
 extern node_t*  merge_nodes( node_t* a, node_t* b ); 
 
 #endif
