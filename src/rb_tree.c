@@ -190,7 +190,7 @@ static void right_rotate ( node_t** root, node_t* node ) {
                         ((node->parent)->left == node ? &(node->parent)->left : &(node->parent)->right) : root;
     
     *new_node = current_left;
-    (*new_node)->right = current_left;
+    (*new_node)->right = current_parent;
     (*new_node)->parent = current_parent->parent;
 
     current_parent->parent = *new_node;
