@@ -19,7 +19,6 @@ typedef enum ChildKind {
 
 static void set_footer ( node_t* node ); 
 static header_t* get_footer ( node_t* node );
-static node_t* get_next_node ( node_t* node );
 static node_t* get_substitute ( node_t* node );  
 static void disconnect_node ( node_t* node ); 
 static void left_rotate ( node_t** root, node_t* node );
@@ -41,7 +40,7 @@ node_t* insert ( node_t** root, node_t* new_node ) { /* top-down insertion */
     while ( current != __sentinel ) {
         parent = current; 
         current = target < get_size(current->header) ? current->left : current->right; 
-        if ( get_status(current->left->header) && get_status(current->right->header) )
+        if ( get_color(current->left->header) && get_color(current->right->header) )
             fix_subtree(root, current); 
     }
 
@@ -69,7 +68,9 @@ node_t* delete ( node_t** root, node_t* node ) { /* bottom-up deletion */
 
     node_t* result = get_substitute(node);
     node_t* parent = node->parent;
-    node_t** new_child = node == *root ? &(*root) : ( parent->left == node ? &parent->left : &parent->right ); 
+    node_t** new_child = node == *root ?
+                        &(*root) : (parent->left == node ? &parent->left : &parent->right); 
+    
     bool black_token = !get_color(node->header); 
  
     if ( result == __sentinel ) { /* no child */
@@ -140,14 +141,19 @@ node_t* merge_nodes ( node_t* a, node_t* b ) { /* merge_nodes assumes a and b ar
     return left; 
 }
 
+node_t* get_next_node ( node_t* node ) {
+    return (node_t *)( (u8 *)get_footer(node) + sizeof(header_t) ); 
+}
+
+node_t* get_prev_node ( node_t* node ) {
+    header_t* prev_footer = (header_t *)((u8 *) node - sizeof(header_t));
+    return (node_t *) ((u8 *)prev_footer - sizeof(header_t) - get_size(*prev_footer));
+}
+
 /* Helper implementations */
 
 static header_t* get_footer ( node_t* node ) {
     return (header_t *)( (u8 *)node + sizeof(header_t) + get_size(node->header) );
-}
-
-static node_t* get_next_node ( node_t* node ) {
-    return (node_t *)( (u8 *)get_footer(node) + sizeof(header_t) ); 
 }
 
 static void disconnect_node ( node_t* node ) {
@@ -163,7 +169,9 @@ static void left_rotate ( node_t** root,  node_t* node ) { /* perform rotation b
     node_t* current_right = node->right;
     node_t* new_right = current_right->left; 
 
-    node_t** new_node = node != *root ? ( (node->parent)->left == node ? &(node->parent)->left : &(node->parent)->right ) : root;
+    node_t** new_node = node != *root ?
+                        ((node->parent)->left == node ? &(node->parent)->left : &(node->parent)->right) : root;
+    
     *new_node = current_right;
     (*new_node)->left = current_parent;
     (*new_node)->parent = current_parent->parent;
@@ -178,7 +186,9 @@ static void right_rotate ( node_t** root, node_t* node ) {
     node_t* current_left = node->left;
     node_t* new_left = current_left->right;
 
-    node_t** new_node = node != *root ? ( (node->parent)->left == node ? &(node->parent)->left : &(node->parent)->right ) : root;
+    node_t** new_node = node != *root ?
+                        ((node->parent)->left == node ? &(node->parent)->left : &(node->parent)->right) : root;
+    
     *new_node = current_left;
     (*new_node)->right = current_left;
     (*new_node)->parent = current_parent->parent;
@@ -208,8 +218,11 @@ static void swap_nodes ( node_t* inorder, node_t* node ) { /* inorder->left is _
     bool color_node = get_color(node->header);
     bool color_inor = get_color(inorder->header); 
 
-    node_t** new_node = node_parent != __sentinel ? (node_parent->left == node ? &node_parent->left : &node_parent->right) : &node;
-    node_t** new_inorder = inor_parent != node ? (inor_parent->left == inorder ? &inor_parent->left : &inor_parent->right) : &inorder;
+    node_t** new_node = node_parent != __sentinel ?
+                        (node_parent->left == node ? &node_parent->left : &node_parent->right) : &node;
+    
+    node_t** new_inorder = inor_parent != node ? 
+                            (inor_parent->left == inorder ? &inor_parent->left : &inor_parent->right) : &inorder;
 
     /* perform swap by indirect linking */
     (*new_node) = inorder;
@@ -234,7 +247,9 @@ static node_t* get_substitute ( node_t* node ) {
         result = node->right;
         while ( result->left != __sentinel ) result = result->left;
     }
-    else if ( node->left != __sentinel || node->right != __sentinel ) result = node->left != __sentinel ? node->left : node->right; 
+    else if ( node->left != __sentinel || node->right != __sentinel ) 
+        result = node->left != __sentinel ? node->left : node->right; 
+    
     return result; 
 }
 
@@ -260,18 +275,26 @@ static bool fix_deletion ( node_t** root, node_t* result, bool black_token ) { /
             set_color(&(current->parent)->header, __red);
             set_color(&sibling->header, __black); 
             current_kind == LEFT ? left_rotate(root, current->parent) : right_rotate(root, current->parent); 
+            continue; 
         }
         else if ( get_color(sibling->left->header) || get_color(sibling->right->header) ) { /* double black violatons and black sibling */
             node_t** near = current_kind == LEFT ? &sibling->left : &sibling->right;
             node_t** far = current_kind == LEFT ? &sibling->right : &sibling->left;  
-            if ( !get_color((*far)->header) ) current_kind == LEFT ? left_rotate(root, sibling) : right_rotate(root, sibling); 
-            current_kind == LEFT ? right_rotate(root, current->parent) : left_rotate(root, current->parent); 
 
+            if ( !get_color((*far)->header) ) 
+                current_kind == LEFT ? left_rotate(root, sibling) : right_rotate(root, sibling); 
+            
+            current_kind == LEFT ? right_rotate(root, current->parent) : left_rotate(root, current->parent); 
             black_token = !black_token;       
         }
         else { /* black sibling and two black nephews */
              set_color(&sibling->header, __red);
-             if ( get_color(sibling->parent->header) ) set_color(&(sibling->parent)->header, __black); 
+             if ( get_color(sibling->parent->header) ) {
+                set_color(&(sibling->parent)->header, __black);
+                black_token = !black_token;
+            } 
+            current = sibling->parent;
+            continue; 
         }
         
         current = grandparent; 
@@ -288,7 +311,7 @@ static bool fix_subtree ( node_t** root, node_t* current_subtree ) { /* fix inse
     node_t* parent = current_subtree->parent;
     node_t* grandpa = parent->parent; 
 
-    if ( get_status(current_subtree->parent->header) ) { /* perform fixes */
+    if ( get_color(current_subtree->parent->header) ) { /* perform fixes */
         ChildKind current_kind = get_child_kind(current_subtree);
         ChildKind parent_kind = get_child_kind(current_subtree->parent);
 

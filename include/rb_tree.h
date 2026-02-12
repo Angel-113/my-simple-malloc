@@ -34,7 +34,9 @@ extern node_t* insert ( node_t** root, node_t* new_node );
 extern node_t* delete ( node_t** root,  node_t* node );
 extern node_t* init_node ( void* ptr, u64 size, bool color, bool status );
 extern node_t* search ( node_t* root, u64 target ); 
-extern node_t* get_node ( void* ptr ); 
-extern node_t*  merge_nodes( node_t* a, node_t* b ); 
+extern node_t* get_node ( void* ptr );
+extern node_t* get_next_node ( node_t* node );
+extern node_t* get_prev_node ( node_t* node );  
+extern node_t* merge_nodes( node_t* a, node_t* b ); 
 
 #endif
