@@ -116,11 +116,6 @@ node_t* get_node ( void* ptr ) { /* get_node assumes ptr = (u8 *)original_node +
     return (node_t *)((u8 *)ptr - sizeof(header_t)); 
 }
 
-void set_footer (node_t* node) { /* A node's footer must be equal to its header */
-    header_t* footer = get_footer(node);
-    *footer = node->header; 
-}
-
 node_t* merge_nodes ( node_t* a, node_t* b ) { /* merge_nodes assumes a and b are free memory contiguous nodes */
     node_t* left = a < b ? a : b;
     node_t* right = left == a ? b : a; 
@@ -151,6 +146,11 @@ node_t* get_prev_node ( node_t* node ) {
 }
 
 /* Helper implementations */
+
+void set_footer (node_t* node) { /* A node's footer must be equal to its header */
+    header_t* footer = get_footer(node);
+    *footer = node->header; 
+}
 
 static header_t* get_footer ( node_t* node ) {
     return (header_t *)( (u8 *)node + sizeof(header_t) + get_size(node->header) );
