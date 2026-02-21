@@ -3,6 +3,8 @@
 #include "../include/header.h"
 #include "../include/rand.h"
 
+#include <stdbool.h>
+#include <stdio.h>
 #include <time.h>
 #include <math.h>
 #include <stdlib.h>
@@ -19,115 +21,140 @@ static u64 get_rng64 ( void );
 static u32 get_rng32 ( void );
 static void init_tester ( void );
 static void insert_nodes ( void );
-static void delete_nodes ( u32 n_nodes );
+static void delete_nodes ( u64 n_nodes );
 
+static bool tree_test_insertion ( void );
+static bool tree_test_deletion( void ); 
+
+static bool check_red_red ( node_t* root ); 
 static bool blacks_property ( node_t* root);
-static u64 count_blacks ( node_t* root );
+static bool count_blacks ( node_t* root, i64* blacks );
 static bool red_root ( node_t* root );
 static bool red_red ( node_t* node );
 
-int main ( void ) { /* main test */
-    if ( !tree_test() ) print_error("SOMETHING WENT WRONG WITH THE TREE\n"); 
-    return 0;
+int main( void ) {
+    tree_test();     
+    return 0; 
 }
 
-/* test implementations */
+bool tree_test( void ) {
+    init_tester(); 
+    tree_test_insertion();
+    tree_test_deletion();    
+    return true; 
+}
 
-bool tree_test() {
+static bool tree_test_deletion ( void ) {
+    delete_nodes(get_rng64() % 100);
+    if ( !check_red_red(root) || red_root(root) || !blacks_property(root) ) {
+        fprintf(stderr, "Tree test deletion failed\n"); 
+        return false; 
+    }
+    fprintf(stdout, "Tree test deletion passed\n"); 
+    return true; 
+}
+
+static bool tree_test_insertion ( void ) {
     insert_nodes();
-    bool test_insert = blacks_property(root) && red_root(root) && red_red(root);
-    delete_nodes(MAX_NODES / 2); 
-    bool test_delete = blacks_property(root) && red_root(root) && red_red(root);
-    return test_delete && test_insert;   
+    if ( !check_red_red(root) || red_root(root) || !blacks_property(root) ) {
+        fprintf(stderr, "Tree test insertion failed\n"); 
+        return false;
+    }
+    fprintf(stdout, "Tree test insertion passed\n"); 
+    return true; 
 }
 
-bool test_insertion ( void ) {
-    bool test = blacks_property(root) && red_red(root);
-    if ( !nodes[0] ) {
-        insert_nodes();
-        test = blacks_property(root) && red_root(root) && red_red(root); 
+static bool count_blacks ( node_t* root, i64* blacks ) {
+    if ( root == __sentinel ) {
+        (*blacks)++;
+        return *blacks; 
     }
-    else {
-        static node_t* current_nodes[MAX_NODES] = { 0 };
-        for ( u64 i = 0; i < MAX_NODES; i++ ) {
-            current_nodes[i] = init_node(malloc(sizeof(node_t)), get_rng64(), __red, __free);
-            insert(root, current_nodes[i]); 
-        }
-        test = blacks_property(root) && red_root(root) && red_root(root);
-        for ( u64 i = 0; i < MAX_NODES; i++ ) free((void *)current_nodes[i]);
-    }
-    return test; 
+    else if ( !get_color(root->header) ) (*blacks)++;
+
+    i64 left_count = 0; i64 right_count = 0;
+    bool left = count_blacks(root, &left_count);
+    bool right = count_blacks(root, &right_count);
+
+    if ( !left || !right || left_count != right ) return false; 
+
+    (*blacks) += left ; 
+    return true; 
 }
 
-/* helpers implementation */
+static bool check_red_red( node_t* root ) {
+    if ( get_color(root->header) && ( get_color(root->left->header) || get_color(root->right->header) ) ) 
+        return false;  
+    else if ( !check_red_red(root->left) && !check_red_red(root->right) ) return false; 
+    return true; 
+}
+
+static bool blacks_property ( node_t* root ) {
+    i64 blacks = 0;
+    if ( !count_blacks(root, &blacks) ) {
+        fprintf(stderr, "Blacks property violated\n");
+        return false; 
+    }
+    fprintf(stdout, "Blacks property preserved\n"); 
+    return true; 
+}
+
+static bool red_root ( node_t* root ) {
+    if ( get_color(root->header) ) {
+        fprintf(stderr, "Root can't be red\n");
+        return true;    
+    }
+    fprintf(stdout, "Root is not red \n"); 
+    return false; 
+}
+
+static bool red_red ( node_t* root ) {
+    if ( !check_red_red(root) ) {
+        fprintf(stderr, "Red-red violation has ocurred\n");
+        return false; 
+    }
+    fprintf(stdout, "Red-red test passed\n"); 
+    return true; 
+}
+
+
+static void insert_nodes ( void ) {
+    if ( root == __sentinel || !root ) init_tester(); 
+    for ( i32 i = 0; i < MAX_NODES; i++ ) {
+        u64 random_size = get_rng64() % 1000;
+        nodes[i] = malloc(sizeof(node_t) + sizeof(header_t) + random_size);
+        nodes[i] = init_node(nodes[i], random_size, __red, __free); 
+        insert(&root, nodes[i]);
+    }
+}
+
+ static void delete_nodes ( u64 n_nodes ) {
+    if ( root == __sentinel || !root ) {
+        fprintf(stderr, "Cannot delete nodes from an empty tree (root == NULL)\n");
+        return; 
+    }
+    while ( n_nodes-- ) {
+        i64 idx = get_rng64() % 1000;
+        while ( !nodes[idx] ) idx = get_rng64() % 1000;
+        delete(&root, nodes[idx]);  
+    }
+}
 
 static void init_rng ( void ) {
     pcg32_srandom_r(&my_rng, time(NULL), (intptr_t)&my_rng); 
 }
 
-static u64 get_rng64 ( void ) {
+static u64 get_rng64 ( void ) { /* for getting a random 64 bit integer */
     return ldexpl(pcg32_random_r(&my_rng), -32); 
 }
 
-static u32 get_rng32 ( void ) {
+static u32 get_rng32 ( void ) { /* generated a 32 bit integer */
     return pcg32_random_r(&my_rng); 
 }
 
 static void init_tester ( void ) { 
     if ( root ) return;
-    root = malloc(sizeof(node_t *));
     init_rng();
-    set_size(&root->header, get_rng64());
-    set_color(&root->header, __black);
-    set_status(&root->header, __free); 
-}
-
-static void insert_nodes ( void ) {
-    for ( u16 i = 0; i < MAX_NODES; i++ ) {
-        if ( !nodes[i] ) nodes[i] = malloc( sizeof(node_t ));
-        nodes[i] = init_node(nodes[i], get_rng64(), __red, __free);
-        insert(root, nodes[i]); 
-    }
-}
-
-static void delete_nodes ( u32 n_nodes ) {
-    while ( n_nodes-- ) {
-        u32 index = get_rng32() % MAX_NODES; 
-        if ( !nodes[index] ) n_nodes++;
-        else {
-            delete(root, nodes[index]);
-            free((void*)nodes[index]); 
-            nodes[index] = NULL; 
-        }
-    }
-}
-
-static u64 count_blacks ( node_t* root ) {
-    u64 blacks = 0;
-
-    node_t* current = root;  
-    while ( current->left != __sentinel ) current = current->left; 
-
-    while ( current != root ) {
-        blacks += !get_color(current->header);
-        current = current->parent;
-        if ( current->right != __sentinel ) {
-            current = current->right; 
-            while ( current->left != __sentinel ) current = current->left;
-        }
-    }
-    
-    return blacks; 
-}
-
-static bool blacks_property ( node_t* root ) {
-    return count_blacks(root->left) == count_blacks(root->right); 
-}
-
-static bool red_root ( node_t* root ) {
-    return !get_color(root->header); 
-}
-
-static bool red_red ( node_t* root ) { 
-    return ( get_color(root->header) && (get_color(root->left->header) || get_color(root->right->header)) ); 
-}
+    u64 random_size = get_rng64() % 1000;
+    root = malloc( sizeof(node_t) + sizeof(header_t) + random_size );
+    root = init_node(root, random_size, __black, __free); 
+} 
