@@ -39,7 +39,7 @@ node_t* insert ( node_t** root, node_t* new_node ) { /* top-down insertion */
 
     while ( current != __sentinel ) {
         parent = current; 
-        current = target < get_size(current->header) ? current->left : current->right; 
+        current = target < get_size(current->header) ? current->left : current->right;
         if ( get_color(current->left->header) && get_color(current->right->header) )
             fix_subtree(root, current); 
     }
@@ -48,9 +48,9 @@ node_t* insert ( node_t** root, node_t* new_node ) { /* top-down insertion */
     node_t** child = target < get_size(parent->header) ? &parent->left : &parent->right;
     *child = new_node;
     (*child)->parent = parent;
-
+        
     /* perform last fix if needed */
-    fix_subtree(root, *child); 
+    fix_subtree(root, *child);  
     
     return new_node;     
 }
@@ -99,7 +99,10 @@ node_t* init_node ( void* ptr, u64 size, bool color, bool status ) { /* init nod
     set_color(&node->header, color);
     set_status(&node->header,  status);
     set_size(&node->header, size);
-    set_footer(node); 
+    set_footer(node);
+    node->parent = __sentinel;
+    node->left = __sentinel;
+    node->right = __sentinel;
     return node; 
 }
 

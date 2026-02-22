@@ -39,49 +39,56 @@ int main( void ) {
 
 bool tree_test( void ) {
     init_tester(); 
-    tree_test_insertion();
-    tree_test_deletion();    
+    if ( !tree_test_insertion() ) return false;
+    if ( !tree_test_deletion() ) return false;    
     return true; 
+}
+
+
+static bool test_helper ( void ) {
+    bool result = true;
+    bool red_root_check = red_root(root);
+    bool red_red_check = red_red(root); 
+    bool blacks_property_check = blacks_property(root); 
+    result = red_red_check && ! red_root_check && blacks_property_check; 
+    return result; 
 }
 
 static bool tree_test_deletion ( void ) {
+    puts("Testing deletion\n"); 
     delete_nodes(get_rng64() % 100);
-    if ( !check_red_red(root) || red_root(root) || !blacks_property(root) ) {
-        fprintf(stderr, "Tree test deletion failed\n"); 
-        return false; 
-    }
-    fprintf(stdout, "Tree test deletion passed\n"); 
-    return true; 
+    bool result = test_helper();
+    fprintf( !result ? stderr : stdout, !result ? "Tree test deletion failed\n" : "Tree test deletion passed\n" ); 
+    return result;  
 }
 
 static bool tree_test_insertion ( void ) {
+    puts("Testing insertion"); 
     insert_nodes();
-    if ( !check_red_red(root) || red_root(root) || !blacks_property(root) ) {
-        fprintf(stderr, "Tree test insertion failed\n"); 
-        return false;
-    }
-    fprintf(stdout, "Tree test insertion passed\n"); 
-    return true; 
+    bool result = test_helper();  
+    fprintf( !result ? stderr : stdout, !result ? "Tree test insertion failed\n" : "Tree test insertion passed\n" ); 
+    puts("Finished test insertion"); 
+    return result; 
 }
 
 static bool count_blacks ( node_t* root, i64* blacks ) {
     if ( root == __sentinel ) {
         (*blacks)++;
-        return *blacks; 
+        return true; 
     }
     else if ( !get_color(root->header) ) (*blacks)++;
 
     i64 left_count = 0; i64 right_count = 0;
-    bool left = count_blacks(root, &left_count);
-    bool right = count_blacks(root, &right_count);
+    bool left = count_blacks(root->left, &left_count);
+    bool right = count_blacks(root->right, &right_count);
 
-    if ( !left || !right || left_count != right ) return false; 
+    if ( !left || !right || left_count != right_count ) return false; 
 
     (*blacks) += left ; 
     return true; 
 }
 
-static bool check_red_red( node_t* root ) {
+static bool check_red_red ( node_t* root ) {
     if ( get_color(root->header) && ( get_color(root->left->header) || get_color(root->right->header) ) ) 
         return false;  
     else if ( !check_red_red(root->left) && !check_red_red(root->right) ) return false; 
@@ -118,13 +125,15 @@ static bool red_red ( node_t* root ) {
 
 
 static void insert_nodes ( void ) {
-    if ( root == __sentinel || !root ) init_tester(); 
+    if ( root == __sentinel || !root ) init_tester();
+    puts("Inserting nodes");  
     for ( i32 i = 0; i < MAX_NODES; i++ ) {
-        u64 random_size = get_rng64() % 1000;
-        nodes[i] = malloc(sizeof(node_t) + sizeof(header_t) + random_size);
-        nodes[i] = init_node(nodes[i], random_size, __red, __free); 
+        u64 random_size = get_rng64() % 100;
+        nodes[i] = malloc(sizeof(node_t) + sizeof(header_t) + random_size * sizeof(unsigned char));
+        nodes[i] = init_node(nodes[i], random_size, __red, __free);
         insert(&root, nodes[i]);
     }
+    puts("Finished inserting nodes"); 
 }
 
  static void delete_nodes ( u64 n_nodes ) {
@@ -132,11 +141,13 @@ static void insert_nodes ( void ) {
         fprintf(stderr, "Cannot delete nodes from an empty tree (root == NULL)\n");
         return; 
     }
+    puts("Deleting nodes"); 
     while ( n_nodes-- ) {
         i64 idx = get_rng64() % 1000;
         while ( !nodes[idx] ) idx = get_rng64() % 1000;
         delete(&root, nodes[idx]);  
     }
+    puts("Finished deleting nodes"); 
 }
 
 static void init_rng ( void ) {
@@ -155,6 +166,6 @@ static void init_tester ( void ) {
     if ( root ) return;
     init_rng();
     u64 random_size = get_rng64() % 1000;
-    root = malloc( sizeof(node_t) + sizeof(header_t) + random_size );
+    root = malloc( sizeof(node_t) + sizeof(header_t) + random_size * sizeof(unsigned char) );
     root = init_node(root, random_size, __black, __free); 
 } 
