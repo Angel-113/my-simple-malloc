@@ -1,6 +1,6 @@
-#include "../include/allocator.h"
-#include "../include/allocator_helper.h"
-#include "../include/rb_tree.h"
+#include "../include/api/allocator.h"
+#include "../include/api/allocator_helper.h"
+#include "../include/core/rb_tree.h"
 
 #include <limits.h>
 #include <stdio.h>

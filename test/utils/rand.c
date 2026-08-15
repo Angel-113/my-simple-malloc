@@ -1,4 +1,4 @@
-#include "../include/rand.h"
+#include "../include/test/rand.h"
 
 /*
  * PCG Random Number Generation for C.

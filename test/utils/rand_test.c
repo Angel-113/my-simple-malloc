@@ -1,5 +1,5 @@
-#include "../include/rand_test.h"
-#include "rand.h"
+#include "../include/test/rand_test.h"
+#include "../include/test/rand.h"
 #include <math.h>
 
 pcg32_random_t init_prng(u64 initstate, u64 initseq) {

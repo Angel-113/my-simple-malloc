@@ -13,7 +13,7 @@ typedef short i16;
 typedef long int i32;
 typedef long long int i64;
 
-extern i64 cmpt_array_grwth_factor(u64 n);
+extern inline i64 cmpt_array_grwth_factor(u64 n);
 extern void print_error(const char *error);
 
 #ifndef MALLOC_TEST_HOOK

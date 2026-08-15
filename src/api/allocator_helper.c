@@ -1,5 +1,5 @@
-#include "../include/allocator_helper.h"
-#include "../include/rb_tree.h"
+#include "../include/api/allocator_helper.h"
+#include "../include/core/rb_tree.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -29,6 +29,7 @@ static node_t *split_node(node_t **node, u64 size);
 static node_t *bestfit_search(node_t **root, u64 size);
 
 __attribute__((constructor(101))) static void init_page_size(void);
+__attribute__((destructor(101))) static void close_page_size(void);
 
 /* these functions will help to introduce multithreading to this program */
 static node_t **get_current_root(void);
@@ -140,7 +141,8 @@ static node_t *create_page(u64 size) {
                       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
   if (node == MAP_FAILED) {
-    print_error("Not enough memory in the system\n");
+    const char *mssg = "Not enough memory in the system\n";
+    print_error(mssg);
     return NULL;
   }
 
@@ -195,9 +197,9 @@ static node_t *bestfit_search(node_t **root, u64 size) {
 static node_t **get_current_root(void) { return &ROOTS[get_root_id(0)]; }
 static u64 get_root_id(u64 pid) { return pid; }
 
-__attribute__((constructor(101))) static void init_page_size(void) {
-  page_size = sysconf(_SC_PAGESIZE);
-}
+static void init_page_size(void) { page_size = sysconf(_SC_PAGESIZE); }
+
+static void close_page_size(void) { page_size = 0; }
 
 /* function for testing allocator */
 #if MALLOC_TEST_HOOK
@@ -274,5 +276,7 @@ float ext_fragmntn(void) {
     get_mem_usage();
   return ext_frag;
 }
+
+void fragmentation_test(void) {}
 
 #endif

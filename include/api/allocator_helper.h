@@ -6,7 +6,7 @@
 #endif
 
 #if MALLOC_TEST_HOOK
-#include "base.h"
+#include "~/include/core/base.h"
 
 extern bool check_pages_integrity(void);
 

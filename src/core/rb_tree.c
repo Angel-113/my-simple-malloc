@@ -1,5 +1,5 @@
-#include "../include/rb_tree.h"
-#include "../include/base.h"
+#include "../include/core/rb_tree.h"
+#include "../include/core/base.h"
 
 #include <limits.h>
 #include <stdbool.h>
@@ -66,7 +66,7 @@ node_t *insert(node_t **root, node_t *new_node) { /* top-down insertion */
   return new_node;
 }
 
-node_t *delete (node_t **root, node_t *node) { /* bottom-up deletion */
+node_t *delete(node_t **root, node_t *node) { /* bottom-up deletion */
   if (!root || *root == __sentinel) {
     print_error("Corrupted tree: root == NULL\n");
     return NULL;

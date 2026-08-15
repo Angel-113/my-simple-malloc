@@ -1,7 +1,7 @@
 #ifndef RB_TREE_TEST_H
 #define RB_TREE_TEST_H
 
-#include "../include/base.h"
+#include "../include/core/base.h"
 
 extern bool tree_test_insertion(u32 nodes);
 extern bool tree_test_deletion(u32 nodes);

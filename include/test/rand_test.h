@@ -1,7 +1,7 @@
 #ifndef RAND_TEST_H
 #define RAND_TEST_H
 
-#include "base.h"
+#include "../include/core/base.h"
 #include "rand.h"
 
 extern pcg32_random_t init_prng(u64 initstate, u64 initseq);

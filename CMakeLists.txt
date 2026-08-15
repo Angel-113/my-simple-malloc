@@ -6,29 +6,25 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(MyMalloc C)
 
-# Define the Core Library
 add_library(malloc_core
-    src/base.c
-    src/allocator.c
-    src/header.c
-    src/rb_tree.c
-    src/allocator_helper.c
+    src/core/base.c
+    src/api/allocator.c
+    src/core/header.c
+    src/core/rb_tree.c
+    src/api/allocator_helper.c
 )
 
-# Allow other targets to see the 'include' folder automatically
 target_include_directories(malloc_core PUBLIC include)
 
-# Define the Test Executable
 add_executable(run_tests
-    test/test.c
-    test/rand.c
-    test/rb_tree_test.c
-    test/allocator_test.c
-    test/rand_test.c
-    test/logger.c
+    test/utils/test.c
+    test/utils/rand.c
+    test/suites/rb_tree_test.c
+    test/suites/allocator_test.c
+    test/utils/rand_test.c
+    test/utils/logger.c
 )
 
-# Link the executable to your malloc core
 target_link_libraries(run_tests PRIVATE malloc_core)
 
 # Testing
@@ -53,6 +49,6 @@ add_test(NAME tree_performance COMMAND run_tests "tree performance")
 set(test 1)
 set(max_tests 5)
 while (test LESS_EQUAL max_tests)
-    add_test(NAME "allocator_example${test}" COMMAND run_tests "allocator examples ${tests}")
+    add_test(NAME "allocator_example${test}" COMMAND run_tests "allocator examples ${test}")
     math(EXPR test "${test} + 1")
 endwhile()

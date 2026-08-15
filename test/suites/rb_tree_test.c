@@ -1,8 +1,7 @@
-#include "../include/rb_tree_test.h"
-#include "../include/rand_test.h"
-#include "../include/rb_tree.h"
+#include "../include/test/rb_tree_test.h"
+#include "../include/core/rb_tree.h"
+#include "../include/test/rand_test.h"
 
-#include <math.h>
 #include <stdlib.h>
 #include <time.h>
 

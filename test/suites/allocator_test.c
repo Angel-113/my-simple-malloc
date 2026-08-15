@@ -1,6 +1,6 @@
-#include "../include/allocator_test.h"
-#include "../include/allocator.h"
-#include "rand_test.h"
+#include "../include/api/allocator_test.h"
+#include "../include/api/allocator.h"
+#include "../include/test/rand_test.h"
 
 #include <stdio.h>
 #include <time.h>

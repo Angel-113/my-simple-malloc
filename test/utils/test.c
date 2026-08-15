@@ -1,5 +1,5 @@
-#include "../include/allocator_test.h"
-#include "../include/rb_tree_test.h"
+#include "../include/api/allocator_test.h"
+#include "../include/test/rb_tree_test.h"
 
 #include <stdlib.h>
 #include <string.h>
